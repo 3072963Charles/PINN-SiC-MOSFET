@@ -1,55 +1,70 @@
-# PINN-SiC-MOSFET
+<div align="center">
+  <img src="assets/banner_pinn.svg" width="100%" alt="PINN 驱动的 SiC MOSFET SPICE 参数提取"/>
+</div>
 
-**基于物理信息神经网络（PINN）的 4H-SiC 功率 MOSFET SPICE 紧凑模型参数提取**
-
-面向 1.2 kV 4H-SiC 垂直 DMOSFET 功率器件，利用物理信息神经网络从 Silvaco TCAD 仿真数据中自动提取 SPICE Level-3 紧凑模型的物理参数，并生成可直接用于 LTspice / ngspice / HSPICE 电路仿真的标准 SPICE `.SUBCKT` / `.MODEL` 文件。整体精度 **MAPE 0.957%**，超越目标（< 3%）3.1 倍。
+<p align="center">
+  <img src="https://img.shields.io/badge/大创项目-物理信息神经网络%20%7C%20SPICE-6366f1?style=for-the-badge"/>
+  <img src="https://img.shields.io/badge/精度-MAPE%200.957%25-16a34a?style=for-the-badge"/>
+  <img src="https://img.shields.io/badge/兼容-LTspice%20%7C%20ngspice%20%7C%20HSPICE-0ea5e9?style=for-the-badge"/>
+  <img src="https://img.shields.io/badge/Author-Charles%20(Zonkit)-181717?style=for-the-badge&logo=github&logoColor=white"/>
+</p>
 
 ---
 
-## 项目背景
+## 📌 项目定位
 
-功率器件紧凑模型是电力电子电路仿真的基石。传统参数提取依赖人工拟合，工作量大、且难以覆盖宽工作范围。本项目将 **PINN（物理信息神经网络）** 引入 SPICE 紧凑模型的参数逆向提取：
+面向 **1.2 kV 4H-SiC 垂直 DMOSFET** 功率器件，利用**物理信息神经网络（PINN）**从 Silvaco TCAD 仿真数据中**自动提取 SPICE Level-3 紧凑模型的物理参数**，并生成可直接用于 **LTspice / ngspice / HSPICE** 电路仿真的标准 SPICE `.SUBCKT / .MODEL` 文件。整体精度 **MAPE 0.957%**，超越目标（< 3%）**3.1 倍**。
 
-- 用 **可微分的 SPICE Level-3 物理模型**（13 个可训练物理参数）承载器件物理；
-- 用 **神经网络残差** 修正物理模型与 TCAD 数据之间的偏差；
+**🎯 项目做了什么**：传统参数提取依赖人工拟合，工作量大且难以覆盖宽工作范围。本项目将 PINN 引入参数逆向提取：
+- 用**可微分的 SPICE Level-3 物理模型**（13 个可训练物理参数）承载器件物理；
+- 用**神经网络残差**修正物理模型与 TCAD 数据之间的偏差；
 - 一次训练即可得到**物理可解释、全工作范围可用**的 SPICE 模型。
 
-## 技术路线
+---
 
-```
-Silvaco TCAD 仿真数据 (4H-SiC VDMOS)
-        │
-        ▼
-数据预处理 ── 多 V_GS/V_DS/温度 CSV 加载、物理特征初始化
-        │
-        ▼
-PINN 混合模型 ── SPICE Level-3 物理模型 × exp(δ_log) 神经网络残差
-        │
-        ▼
-双阶段联合训练 ── 对数域损失 + 3×亚阈值专项损失 + 物理/平滑/单调约束
-        │
-        ▼
-物理参数提取 ── 13 个参数（VTO、KP、THETA、U0、VMAX、LAMBDA、ETA…）
-        │
-        ▼
-SPICE 模型生成 ── SiC_MOSFET_PINN.lib（.SUBCKT + .MODEL + JFET + 非线性电容）
-        │
-        ▼
-精度验证 ── 分区域/分温度 MAPE、R²、Gummel 对称性测试（GST）
+## 🔄 技术流水线
+
+```mermaid
+flowchart LR
+    A[Silvaco TCAD 仿真<br/>4H-SiC VDMOS 数据] --> B[数据预处理<br/>多 V_GS/V_DS/温度 CSV<br/>物理特征初始化]
+    B --> C[PINN 混合模型<br/>SPICE Level-3 物理模型<br/>× exp δ_log 残差修正]
+    C --> D[双阶段联合训练<br/>对数域损失 + 3× 亚阈值专项<br/>物理/平滑/单调约束]
+    D --> E[物理参数提取<br/>13 个参数: VTO KP THETA U0<br/>VMAX LAMBDA ETA …]
+    E --> F[SPICE 模型生成<br/>SiC_MOSFET_PINN.lib<br/>.SUBCKT + .MODEL + JFET + 电容]
+    F --> G[精度验证<br/>分区域/分温度 MAPE<br/>R² · Gummel 对称性测试]
 ```
 
-## 核心创新
+---
 
-| 创新点 | 说明 |
-|--------|------|
-| 物理残差架构 | `I_total = I_phys × exp(δ_log)`，乘法修正保证电流恒为正、梯度畅通 |
-| 可微分 SPICE Level-3 模型 | 13 个物理参数纯 PyTorch 实现，支持自动微分 |
-| 亚阈值专项损失 | 3 倍加权 log-space 损失，显著提升弱反型区精度 |
-| 双端对称导通 | 支持 V_DS < 0 反向导通，通过 Gummel 对称性测试（误差 0.67%） |
-| 全工作范围覆盖 | V_GS ∈ [0, 20] V，V_DS ∈ [0, 1200] V，T ∈ [298, 448] K |
-| 温度依赖内置 | VTH(T) 与 μ(T) 温度模型，覆盖 25–175 °C |
+## 🧑‍💻 我的工作（大创全流程）
 
-## 精度验证结果
+| 阶段 | 工作内容 |
+|------|----------|
+| 🔍 文献调研 | 系统调研 2021–2026 年"SiC MOSFET 紧凑模型标准"、"PINN 半导体参数提取"、"SiC 特有物理效应建模"三大方向 |
+| 📐 方案设计 | 设计物理残差架构 `I_total = I_phys × exp(δ_log)`，确定 13 参数物理模型与损失函数体系 |
+| 🛠️ 数据生成 | 编写 Silvaco TCAD 4H-SiC VDMOS 仿真脚本（`improved_VDMOS.in`），生成全工作范围 I-V 数据 |
+| 🤖 模型实现 | PyTorch 实现可微分 SPICE Level-3 物理模型 + PINN 骨干网络（8 层 MLP、Swish、LayerNorm） |
+| ⚙️ 训练调优 | 双阶段联合训练（AdamW + CosineAnnealing），解决 NaN、参数崩塌、亚阈值精度差等问题 |
+| 📦 模型生成 | 编写 SPICE `.lib` 生成器，输出标准 `.SUBCKT / .MODEL` + JFET + 非线性电容 |
+| ✅ 验证迭代 | 分区域 / 分温度 MAPE、R²、Gummel 对称性测试，LTspice / ngspice / HSPICE 多平台验证 |
+
+**🧭 工作领域**：功率半导体器件建模与仿真 · 物理信息机器学习 · 电路仿真与模型提取
+
+---
+
+## 🎓 学到了什么
+
+| 方向 | 收获 |
+|------|------|
+| 器件物理 | 4H-SiC 特性：阈值电压、迁移率退化、载流子饱和速度、DIBL 效应、温度依赖（25–175 °C） |
+| 紧凑模型理论 | SPICE Level-3 模型参数体系（VTO / KP / THETA / U0 / NFS / GAMMA / VMAX / KAPPA / LAMBDA …）及其物理含义 |
+| PINN 工程 | 物理残差乘法修正、单调性约束、亚阈值专项 log-space 损失、分离学习率、零初始化策略 |
+| TCAD 仿真 | Silvaco DeckBuild / Atlas 流程：网格、模型、接触、求解器设置与 I-V 提取 |
+| 验证方法论 | 分区域（亚阈值 / 强反型）MAPE 评估、Gummel 对称性测试（GST）、温度扫描验证 |
+
+---
+
+## 🏆 关键成果
 
 | 指标 | 本工作（PINN-SPICE） | 目标 / 前人 |
 |------|---------------------|-------------|
@@ -61,10 +76,37 @@ SPICE 模型生成 ── SiC_MOSFET_PINN.lib（.SUBCKT + .MODEL + JFET + 非线
 | GST 对称性 | **0.67%**（通过） | < 1% |
 
 - 78.5% 测试样本误差 < 0.5%，93.5% 样本误差 < 5%
-- 分温度：298 K 0.61% / 348 K 0.92% / 398 K 1.59% / 448 K 0.71%
+- 分温度：298 K **0.61%** / 348 K 0.92% / 398 K 1.59% / 448 K 0.71%
 - 对比前次经验模型（仅 V_GS∈[0,12]V 有效、外推发散）：本模型全范围 MAPE 1.62% vs 前次 3.0×10⁸%
 
-## 模型架构
+---
+
+## 🧰 工具链
+
+<p align="center">
+  <img src="https://img.shields.io/badge/Python-3776AB?style=for-the-badge&logo=python&logoColor=white"/>
+  <img src="https://img.shields.io/badge/PyTorch-EE4C2C?style=for-the-badge&logo=pytorch&logoColor=white"/>
+  <img src="https://img.shields.io/badge/Silvaco%20TCAD-2f6f9f?style=for-the-badge"/>
+  <img src="https://img.shields.io/badge/LTspice-1d4ed8?style=for-the-badge"/>
+  <img src="https://img.shields.io/badge/ngspice-059669?style=for-the-badge"/>
+  <img src="https://img.shields.io/badge/HSPICE-c02618?style=for-the-badge"/>
+  <img src="https://img.shields.io/badge/MATLAB-0076A8?style=for-the-badge&logo=mathworks&logoColor=white"/>
+</p>
+
+---
+
+## 🧠 核心创新
+
+| 创新点 | 说明 |
+|--------|------|
+| 物理残差架构 | `I_total = I_phys × exp(δ_log)`，乘法修正保证电流恒为正、梯度畅通 |
+| 可微分 SPICE Level-3 模型 | 13 个物理参数纯 PyTorch 实现，支持自动微分 |
+| 亚阈值专项损失 | 3 倍加权 log-space 损失，显著提升弱反型区精度 |
+| 双端对称导通 | 支持 V_DS < 0 反向导通，通过 Gummel 对称性测试（误差 0.67%） |
+| 全工作范围覆盖 | V_GS ∈ [0, 20] V，V_DS ∈ [0, 1200] V，T ∈ [298, 448] K |
+| 温度依赖内置 | VTH(T) 与 μ(T) 温度模型，覆盖 25–175 °C |
+
+### 模型架构
 
 ```
 输入: [V_GS, V_DS, V_BS, T]  (4 维)
@@ -117,7 +159,9 @@ L_total = L_data_log + 3.0×L_data_sub + L_data_lin
 | L_smooth | mean(d²I/dV_DS²) | I-V 平滑性 |
 | L_mono | mean(max(0, ΔV_GS×ΔI)) | V_GS 单调性 |
 
-## 快速开始
+---
+
+## 🚀 快速开始
 
 ### 环境要求
 
@@ -172,14 +216,16 @@ XM1 D G S SiC_MOSFET_PINN
 .temp 25 75 125 175
 ```
 
-## 项目结构
+---
+
+## 📁 项目结构
 
 ```
 PINN-SiC-MOSFET/
 ├── main.py                      # 完整流水线入口（数据→训练→提取→生成→验证）
 ├── improved_VDMOS.in            # Silvaco TCAD 4H-SiC VDMOS 仿真脚本
 ├── Silvaco_IV01_csv1.csv        # 示例 TCAD 仿真数据
-├── AI_Prompt.md                 # 项目方案设计 Prompt（文献调研→路线图→方案）
+├── assets/                      # 项目 Banner 等展示资源
 ├── data_processing/
 │   └── load_tcad.py             # TCAD 数据加载、物理特征提取、数据集构建
 ├── pinn_model/
@@ -201,7 +247,9 @@ PINN-SiC-MOSFET/
     └── validation/validation_report.json
 ```
 
-## 关键问题与解决
+---
+
+## ⚙️ 关键问题与解决
 
 | 问题 | 解决方案 |
 |------|----------|
@@ -211,10 +259,12 @@ PINN-SiC-MOSFET/
 | 亚阈值精度差（13.4%） | 新增 3× 亚阈值专项 log-space 损失 |
 | V_DS=0 处电流泄漏 | 缩窄饱和区过渡带宽度 |
 
-## 许可
+---
+
+## 📄 许可
 
 本项目仅供学术研究与交流使用。
 
 ---
 
-*Author: Charles (Zonkit) · 4H-SiC Power MOSFET Modeling Project*
+*Author: Charles (Zonkit) · 4H-SiC Power MOSFET Modeling Project · 大创项目*
