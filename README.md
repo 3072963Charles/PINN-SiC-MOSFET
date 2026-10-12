@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="assets/banner_pinn.svg" width="100%" alt="PINN 驱动的 SiC MOSFET SPICE 参数提取"/>
+  <img src="assets/banner.svg" width="100%" alt="PINN 驱动的 SiC MOSFET SPICE 参数提取"/>
 </div>
 
 <p align="center">
