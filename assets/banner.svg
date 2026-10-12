@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 320" width="1280" height="320" role="img" aria-label="PINN-Driven SiC MOSFET SPICE Parameter Extraction">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#07101f"/>
+      <stop offset="0.55" stop-color="#0c2f4a"/>
+      <stop offset="1" stop-color="#1068a8"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0.82" cy="0.15" r="0.5">
+      <stop offset="0" stop-color="#38bdf8" stop-opacity="0.4"/>
+      <stop offset="1" stop-color="#38bdf8" stop-opacity="0"/>
+    </radialGradient>
+    <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+      <path d="M40 0 L0 0 0 40" fill="none" stroke="#ffffff" stroke-opacity="0.07"/>
+    </pattern>
+  </defs>
+  <rect width="1280" height="320" fill="url(#bg)"/>
+  <rect width="1280" height="320" fill="url(#glow)"/>
+  <rect width="1280" height="320" fill="url(#grid)"/>
+  <g stroke="#7dd3fc" stroke-opacity="0.5" stroke-width="2.5" fill="none" stroke-linejoin="round" stroke-linecap="round">
+    <path d="M950 240 L1000 190 L1055 222 L1108 150 L1164 176 L1210 108"/>
+  </g>
+  <g fill="#a5f3fc">
+    <circle cx="950" cy="240" r="5"/>
+    <circle cx="1000" cy="190" r="5"/>
+    <circle cx="1055" cy="222" r="5"/>
+    <circle cx="1108" cy="150" r="5"/>
+    <circle cx="1164" cy="176" r="5"/>
+    <circle cx="1210" cy="108" r="5"/>
+  </g>
+  <g font-family="'Segoe UI','Microsoft YaHei',system-ui,sans-serif">
+    <text x="72" y="116" font-size="50" font-weight="700" fill="#ffffff">PINN 驱动的 <tspan fill="#7dd3fc">SiC MOSFET</tspan> SPICE 参数提取</text>
+    <text x="74" y="158" font-size="22" fill="#bae6fd" opacity="0.92">Physics-Informed Neural Networks × Silvaco TCAD × SPICE Level-3</text>
+    <text x="74" y="198" font-size="25" font-weight="600" fill="#ffffff">大创项目 · 物理信息神经网络自动提取紧凑模型物理参数</text>
+    <g font-size="19" font-weight="600">
+      <rect x="72" y="228" width="238" height="42" rx="21" fill="#ffffff" opacity="0.12" stroke="#ffffff" stroke-opacity="0.25"/>
+      <text x="191" y="255" text-anchor="middle" fill="#a5f3fc">整体 MAPE 0.957%</text>
+      <rect x="326" y="228" width="218" height="42" rx="21" fill="#ffffff" opacity="0.12" stroke="#ffffff" stroke-opacity="0.25"/>
+      <text x="435" y="255" text-anchor="middle" fill="#93c5fd">R² = 0.99904</text>
+      <rect x="560" y="228" width="238" height="42" rx="21" fill="#ffffff" opacity="0.12" stroke="#ffffff" stroke-opacity="0.25"/>
+      <text x="679" y="255" text-anchor="middle" fill="#c4b5fd">13 个物理参数提取</text>
+      <rect x="814" y="228" width="248" height="42" rx="21" fill="#ffffff" opacity="0.12" stroke="#ffffff" stroke-opacity="0.25"/>
+      <text x="938" y="255" text-anchor="middle" fill="#fca5a5">兼容 LTspice / ngspice / HSPICE</text>
+    </g>
+  </g>
+</svg>
