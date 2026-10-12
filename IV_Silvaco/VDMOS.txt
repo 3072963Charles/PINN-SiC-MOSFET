@@ -1,0 +1,117 @@
+go atlas simflags="-p 4"
+
+mesh space.mult=1.0
+
+x.m loc=0 spac=0.1
+x.m loc=0.5 spac=0.1
+x.m loc=2 spac=0.1
+x.m loc=2.5 spac=0.05
+x.m loc=2.7 spac=0.05
+x.m loc=3 spac=0.2
+x.m loc=5.2 spac=0.2
+
+
+
+y.m loc=-0.15 spac=0.05
+y.m loc=-0.1 spac=0.05
+y.m loc=-0.05 spac=0.05
+y.m loc=0 spac=0.05
+y.m loc=1 spac=0.05
+
+y.m loc=19.5 spac=0.5
+y.m loc=20 spac=0.05
+y.m loc=20.5 spac=0.5
+
+y.m loc=29.5 spac=0.5
+y.m loc=30 spac=0.05
+y.m loc=30.5 spac=0.5
+
+y.m loc=85 spac=0.5
+
+
+region num=1 material=4h-sic x.min=0 x.max=5.2 y.min=0 y.max=85
+region num=2 material=oxide  y.max=0
+
+
+
+elec name=gate x.min=2.5 y.max=-0.05 material=poly
+elec name=source x.max=2 y.max=0 material=aluminum
+elec name=drain bottom material=aluminum
+
+
+#底部n+区域
+doping uniform conc=1.5e19 n.type y.min=80 material=4h-sic
+#底部n-区域
+doping uniform conc=2.2e15 n.type x.min=0 x.max=5.2 y.min=0 y.max=80 material=4h-sic
+#p well
+doping uniform conc=4e17 p.type x.min=0 x.max=3 y.min=0 y.max=20 material=4h-sic
+#顶部n+区域
+doping uniform conc=1.5e19 n.type x.min=0.5 x.max=2.7 y.min=0 y.max=1 material=4h-sic
+#顶部p+区域
+doping uniform conc=1.5e19 p.type x.min=0 x.max=0.5 y.min=0 y.max=1 material=4h-sic
+
+save outf=SiCMOS00.str
+tonyplot SiCMOS00.str
+
+
+#模型定义
+models cvt srh print impact.i
+ 
+#击穿模型#更改材料的禁带宽度
+material material=sic-4h eg300=1.1
+impact crowell e.dir
+
+#多晶硅栅
+contact name=gate n.poly
+
+#更改材料的禁带宽度
+#material material=sic-4h eg300=1.1
+
+method newton
+
+
+solve init 
+##############################################
+#击穿特性曲线
+#log outf=SiCMOS_vgate_BD_EgChg.log 
+#solve vgate=0 vsource=0 
+#solve vstep=20 vfinal=200 name=drain
+#solve vstep=100 vfinal=3000 name=drain
+#tonyplot SiCMOS_vgate_BD_EgChg.log 
+##############################################
+#IV转移特性曲线
+#log outf=SiCMOS_IV2.log
+#solve vdrain=20 vgate=0 vstep=0.5 vfinal=10 name=gate
+#tonyplot SiCMOS_IV2.log
+#############################################
+##CV part
+#log outf=SiCMOS_CV_00.log 
+#solve vdrain=0 vstep=20 vfinal=1000 name=drain ac freq=1e8
+#save outf=SiCMOS_CV_200.str
+#tonyplot SiCMOS_CV_00.log
+#############################################
+#IV输出特性曲线
+solve vgate=8.4 outf=solve1
+solve vgate=8.6 outf=solve2
+solve vgate=8.8 outf=solve3
+solve vgate=9 outf=solve4
+#solve vgate=9.5 outf=solve5
+###
+load infile=solve1
+log outf=SiCMOS_gate84.log 
+solve name=drain vdrain=0 vstep=1 vfinal=10
+###
+load infile=solve2
+log outf=SiCMOS_gate86.log 
+solve name=drain vdrain=0 vstep=1 vfinal=10
+##
+load infile=solve3
+log outf=SiCMOS_gate88.log 
+solve name=drain vdrain=0 vstep=1 vfinal=10
+###
+load infile=solve4
+log outf=SiCMOS_gate9.log 
+solve name=drain vdrain=0 vstep=1 vfinal=10
+##
+tonyplot -overlay  SiCMOS_gate84.log SiCMOS_gate86.log SiCMOS_gate88.log SiCMOS_gate9.log
+quit

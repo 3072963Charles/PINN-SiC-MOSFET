@@ -1,0 +1,244 @@
+go atlas simflags="-p 4"
+
+# =============================================================================
+# Improved 4H-SiC Vertical DMOSFET TCAD Simulation
+# Based on previous work (VDMOS.txt) with critical fixes:
+#   1. 4H-SiC bandgap corrected: 1.1 eV → 3.26 eV
+#   2. Added interface trap distribution (D_it) — SiC core physics
+#   3. Added incomplete ionization for dopants
+#   4. Extended V_GS/V_DS/T scan ranges for full operating envelope
+#   5. Added C-V simulation capability
+# =============================================================================
+
+# ---- Mesh Definition (inherited from previous work) ----
+mesh space.mult=1.0
+
+x.m loc=0    spac=0.1
+x.m loc=0.5  spac=0.1
+x.m loc=2    spac=0.1
+x.m loc=2.5  spac=0.05
+x.m loc=2.7  spac=0.05
+x.m loc=3    spac=0.2
+x.m loc=5.2  spac=0.2
+
+y.m loc=-0.15 spac=0.05
+y.m loc=-0.10 spac=0.05
+y.m loc=-0.05 spac=0.05
+y.m loc=0     spac=0.05
+y.m loc=1     spac=0.05
+y.m loc=19.5  spac=0.5
+y.m loc=20    spac=0.05
+y.m loc=20.5  spac=0.5
+y.m loc=29.5  spac=0.5
+y.m loc=30    spac=0.05
+y.m loc=30.5  spac=0.5
+y.m loc=85    spac=0.5
+
+# ---- Regions ----
+region num=1 material=4h-sic x.min=0 x.max=5.2 y.min=0 y.max=85
+region num=2 material=oxide  y.max=0
+
+# ---- Electrodes ----
+elec name=gate   x.min=2.5 y.max=-0.05 material=poly
+elec name=source x.max=2   y.max=0      material=aluminum
+elec name=drain  bottom                  material=aluminum
+
+# ---- Doping (inherited from previous work) ----
+# Bottom N+ region (drain contact)
+doping uniform conc=1.5e19 n.type y.min=80 material=4h-sic
+# N- drift layer
+doping uniform conc=2.2e15 n.type x.min=0 x.max=5.2 y.min=0 y.max=80 material=4h-sic
+# P-well
+doping uniform conc=4e17  p.type x.min=0 x.max=3   y.min=0 y.max=20 material=4h-sic
+# Top N+ region (source)
+doping uniform conc=1.5e19 n.type x.min=0.5 x.max=2.7 y.min=0 y.max=1 material=4h-sic
+# Top P+ region (body contact)
+doping uniform conc=1.5e19 p.type x.min=0 x.max=0.5 y.min=0 y.max=1 material=4h-sic
+
+save outf=SiCMOS_structure.str
+tonyplot SiCMOS_structure.str
+
+# ---- Physical Models ----
+# FIX 1: Correct 4H-SiC bandgap
+material material=sic-4h eg300=3.26 egalpha=3.3e-4 egbeta=0.0
+
+# FIX 2: Correct 4H-SiC permittivity
+material material=sic-4h eps=9.7
+
+# Mobility: CVT (Lombardi) + High-Field Saturation + SRH
+models cvt srh print impact.i
+
+# Incomplete ionization (FIX 3)
+material material=sic-4h incomplete
+
+# Interface trap distribution (FIX 4: CRITICAL for SiC MOSFET)
+inttrap  acceptor e.level=0.2 density=5e12 s=0.2 \
+         acceptor e.level=0.4 density=2e12 s=0.3 \
+         acceptor e.level=0.6 density=5e11 s=0.3
+
+# Impact ionization for breakdown (retained from previous work)
+impact crowell e.dir
+
+# Polysilicon gate
+contact name=gate n.poly
+
+# ---- Numerical Method ----
+method newton trap maxtrap=10
+
+# =============================================================================
+# Simulation 1: I-V Output Characteristics
+# V_GS = 0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20 V
+# V_DS = 0 → 1200 V (adaptive)
+# T = 298, 348, 398, 448 K
+# =============================================================================
+solve init
+
+# Room temperature (298K)
+solve vgate=0   outf=solve_vg00
+solve vgate=2   outf=solve_vg02
+solve vgate=4   outf=solve_vg04
+solve vgate=6   outf=solve_vg06
+solve vgate=8   outf=solve_vg08
+solve vgate=10  outf=solve_vg10
+solve vgate=12  outf=solve_vg12
+solve vgate=14  outf=solve_vg14
+solve vgate=16  outf=solve_vg16
+solve vgate=18  outf=solve_vg18
+solve vgate=20  outf=solve_vg20
+
+# Run output sweeps
+# VGS=0V
+load infile=solve_vg00
+log outf=SiCMOS_IV_VGS00.log
+solve name=drain vdrain=0 vstep=1 vfinal=10
+
+# VGS=2V
+load infile=solve_vg02
+log outf=SiCMOS_IV_VGS02.log
+solve name=drain vdrain=0 vstep=2 vfinal=50
+
+# VGS=4V
+load infile=solve_vg04
+log outf=SiCMOS_IV_VGS04.log
+solve name=drain vdrain=0 vstep=5 vfinal=200
+
+# VGS=6V
+load infile=solve_vg06
+log outf=SiCMOS_IV_VGS06.log
+solve name=drain vdrain=0 vstep=10 vfinal=500
+
+# VGS=8V
+load infile=solve_vg08
+log outf=SiCMOS_IV_VGS08.log
+solve name=drain vdrain=0 vstep=10 vfinal=800
+
+# VGS=10V
+load infile=solve_vg10
+log outf=SiCMOS_IV_VGS10.log
+solve name=drain vdrain=0 vstep=20 vfinal=1200
+
+# VGS=12V
+load infile=solve_vg12
+log outf=SiCMOS_IV_VGS12.log
+solve name=drain vdrain=0 vstep=20 vfinal=1200
+
+# VGS=14V
+load infile=solve_vg14
+log outf=SiCMOS_IV_VGS14.log
+solve name=drain vdrain=0 vstep=20 vfinal=1200
+
+# VGS=16V
+load infile=solve_vg16
+log outf=SiCMOS_IV_VGS16.log
+solve name=drain vdrain=0 vstep=20 vfinal=1200
+
+# VGS=18V
+load infile=solve_vg18
+log outf=SiCMOS_IV_VGS18.log
+solve name=drain vdrain=0 vstep=20 vfinal=1200
+
+# VGS=20V
+load infile=solve_vg20
+log outf=SiCMOS_IV_VGS20.log
+solve name=drain vdrain=0 vstep=20 vfinal=1200
+
+# Overlay plot of output characteristics
+tonyplot -overlay SiCMOS_IV_VGS00.log SiCMOS_IV_VGS04.log \
+          SiCMOS_IV_VGS08.log SiCMOS_IV_VGS12.log \
+          SiCMOS_IV_VGS16.log SiCMOS_IV_VGS20.log
+
+# =============================================================================
+# Simulation 2: Transfer Characteristic
+# V_DS = 0.1, 1, 10 V (3 bias points)
+# V_GS = 0 → 20 V (0.1V step)
+# =============================================================================
+solve init
+log outf=SiCMOS_transfer_VD01.log
+solve vdrain=0.1 vgate=0 vstep=0.1 vfinal=20 name=gate
+
+solve init
+log outf=SiCMOS_transfer_VD1.log
+solve vdrain=1.0 vgate=0 vstep=0.1 vfinal=20 name=gate
+
+solve init
+log outf=SiCMOS_transfer_VD10.log
+solve vdrain=10 vgate=0 vstep=0.1 vfinal=20 name=gate
+
+tonyplot -overlay SiCMOS_transfer_VD01.log \
+          SiCMOS_transfer_VD1.log SiCMOS_transfer_VD10.log
+
+# =============================================================================
+# Simulation 3: C-V Characteristics (AC small-signal)
+# f = 1 MHz, V_DS swept, V_GS fixed
+# =============================================================================
+solve init
+
+log outf=SiCMOS_CV.log
+solve vdrain=0 vstep=20 vfinal=1000 name=drain ac freq=1e6
+save outf=SiCMOS_CV.str
+tonyplot SiCMOS_CV.log
+
+# =============================================================================
+# Simulation 4: Temperature Sweep (transfer at VDS=10V)
+# V_GS = 0 → 20V at T = 298, 348, 398, 448 K
+# =============================================================================
+# T = 348K (75°C)
+go atlas simflags="-p 4"
+mesh infile=SiCMOS_structure.str
+models cvt srh incomplete fldmob
+material material=sic-4h eg300=3.26
+impact crowell e.dir
+inttrap acceptor e.level=0.2 density=5e12 s=0.2
+method newton
+solve init
+solve vdrain=10 vgate=0 vstep=0.1 vfinal=20 name=gate temperature=348 \
+      outf=SiCMOS_T348_transfer.log
+
+# T = 398K (125°C)
+go atlas simflags="-p 4"
+mesh infile=SiCMOS_structure.str
+models cvt srh incomplete fldmob
+material material=sic-4h eg300=3.26
+impact crowell e.dir
+inttrap acceptor e.level=0.2 density=5e12 s=0.2
+method newton
+solve init
+solve vdrain=10 vgate=0 vstep=0.1 vfinal=20 name=gate temperature=398 \
+      outf=SiCMOS_T398_transfer.log
+
+# T = 448K (175°C)
+go atlas simflags="-p 4"
+mesh infile=SiCMOS_structure.str
+models cvt srh incomplete fldmob
+material material=sic-4h eg300=3.26
+impact crowell e.dir
+inttrap acceptor e.level=0.2 density=5e12 s=0.2
+method newton
+solve init
+solve vdrain=10 vgate=0 vstep=0.1 vfinal=20 name=gate temperature=448 \
+      outf=SiCMOS_T448_transfer.log
+
+tonyplot -overlay SiCMOS_transfer_VD10.log SiCMOS_T348_transfer.log \
+          SiCMOS_T398_transfer.log SiCMOS_T448_transfer.log
+
+quit

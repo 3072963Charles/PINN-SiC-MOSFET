@@ -1,0 +1,102 @@
+{
+  "overall_metrics": {
+    "RMSE": 2e-06,
+    "MAE": 0.0,
+    "MAPE": 0.956874,
+    "MAPE_max": 49.208157,
+    "R2": 0.999043,
+    "N": 679.0
+  },
+  "region_metrics": {
+    "subthreshold": {
+      "RMSE": 4e-06,
+      "MAE": 1e-06,
+      "MAPE": 4.586797,
+      "MAPE_max": 49.208157,
+      "R2": 0.998998,
+      "N": 116.0
+    },
+    "above_threshold": {
+      "RMSE": 0.0,
+      "MAE": 0.0,
+      "MAPE": 0.208969,
+      "MAPE_max": 0.921477,
+      "R2": 0.99998,
+      "N": 563.0
+    },
+    "overall": {
+      "RMSE": 2e-06,
+      "MAE": 0.0,
+      "MAPE": 0.956874,
+      "MAPE_max": 49.208157,
+      "R2": 0.999043,
+      "N": 679.0
+    }
+  },
+  "temperature_metrics": {
+    "T298": {
+      "RMSE": 1e-06,
+      "MAE": 0.0,
+      "MAPE": 0.613843,
+      "MAPE_max": 6.69676,
+      "R2": 0.995666,
+      "N": 166.0
+    },
+    "T348": {
+      "RMSE": 3e-06,
+      "MAE": 0.0,
+      "MAPE": 0.915417,
+      "MAPE_max": 49.208157,
+      "R2": 0.998822,
+      "N": 160.0
+    },
+    "T398": {
+      "RMSE": 1e-06,
+      "MAE": 0.0,
+      "MAPE": 1.585916,
+      "MAPE_max": 37.399975,
+      "R2": 0.999778,
+      "N": 173.0
+    },
+    "T448": {
+      "RMSE": 0.0,
+      "MAE": 0.0,
+      "MAPE": 0.705498,
+      "MAPE_max": 11.18198,
+      "R2": 0.999516,
+      "N": 180.0
+    }
+  },
+  "comparison_with_previous": {
+    "comparison_range": {
+      "V_GS_range": "[0, 12] V",
+      "V_DS_range": "[0, 30] V",
+      "n_valid": 13,
+      "n_total": 720,
+      "note": "Previous model polynomials diverge outside fitting range"
+    },
+    "PINN_SPICE_Level3": {
+      "MAPE_pct_full_range": "0.957",
+      "MAPE_pct_valid_range": "1.62",
+      "RMSE": 0.0,
+      "R2": "1.0"
+    },
+    "Previous_Empirical": {
+      "MAPE_pct": 303567174.477,
+      "RMSE": 81.482997,
+      "R2": -352085146838825.0
+    },
+    "Improvement": {
+      "MAPE_ratio": 187389998.57,
+      "better": "True",
+      "description": "On V_GS\u2208[0,12]V, V_DS\u2208[0,30]V: PINN MAPE = 1.62% vs Previous MAPE = 303567174.48%"
+    }
+  },
+  "gummel_symmetry_test": {
+    "passed": false,
+    "GST_RMSE": 5e-08,
+    "GST_RMSE_relative_pct": 0.67
+  },
+  "accuracy_verdict": "PASS",
+  "target": "MAPE < 3% (vs previous work ~5%)"
+}

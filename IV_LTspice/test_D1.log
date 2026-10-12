@@ -1,0 +1,4 @@
+Stray ".ends" card: .ends
+Circuit: .SUBCKT FYP_ORIGIN GATE DRAIN SOURCE
+
+Fatal Error: No analysis request found.
